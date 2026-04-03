@@ -44,7 +44,7 @@ private:
     void processRxBuffer();
     bool tryExtractOneFrame(QByteArray &frame);
     void parseModbusResponse(const QByteArray &frame);
-    float registersToBigEndianFloat(quint16 regHi, quint16 regLo);
+    float registersToLittleEndianByteSwapFloat(quint16 regHi, quint16 regLo);
 
     bool sendReadRequest(quint8 slave, quint16 startAddr, quint16 quantity);
 

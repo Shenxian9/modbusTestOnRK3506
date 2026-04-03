@@ -461,9 +461,9 @@ void MainWindow::parseModbusResponse(const QByteArray &frame)
         appendLog(QStringLiteral("寄存器解析: %1").arg(m_lastRegsLabel->text()));
 
         if (regs.size() == 2) {
-            const float f = registersToBigEndianFloat(regs.at(0), regs.at(1));
+            const float f = registersToLittleEndianByteSwapFloat(regs.at(0), regs.at(1));
             m_lastFloatLabel->setText(QString::number(f, 'g', 10));
-            appendLog(QStringLiteral("Big-Endian Float解析: %1").arg(m_lastFloatLabel->text()));
+            appendLog(QStringLiteral("Little-Endian Byte-Swap Float解析: %1").arg(m_lastFloatLabel->text()));
         } else {
             m_lastFloatLabel->setText(QStringLiteral("-"));
         }
@@ -494,9 +494,18 @@ void MainWindow::parseModbusResponse(const QByteArray &frame)
     appendLog(QStringLiteral("未处理功能码: 0x%1").arg(QString::number(func, 16).toUpper()));
 }
 
-float MainWindow::registersToBigEndianFloat(quint16 regHi, quint16 regLo)
+float MainWindow::registersToLittleEndianByteSwapFloat(quint16 regHi, quint16 regLo)
 {
-    const quint32 raw = (static_cast<quint32>(regHi) << 16) | static_cast<quint32>(regLo);
+    const quint8 b0 = static_cast<quint8>((regHi >> 8) & 0xFF);
+    const quint8 b1 = static_cast<quint8>(regHi & 0xFF);
+    const quint8 b2 = static_cast<quint8>((regLo >> 8) & 0xFF);
+    const quint8 b3 = static_cast<quint8>(regLo & 0xFF);
+
+    const quint32 raw = (static_cast<quint32>(b3) << 24)
+                        | (static_cast<quint32>(b2) << 16)
+                        | (static_cast<quint32>(b1) << 8)
+                        | static_cast<quint32>(b0);
+
     float value = 0.0f;
     static_assert(sizeof(float) == sizeof(quint32), "float must be 4 bytes");
     std::memcpy(&value, &raw, sizeof(float));
