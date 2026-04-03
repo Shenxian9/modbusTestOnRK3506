@@ -27,30 +27,30 @@ private slots:
     void onReadHoldingRegisters();
     void onReadFlowRate();
     void onReadFlowVelocity();
-    void onSerialReadyRead();
+    void onReadyRead();
     void onSerialErrorOccurred();
+    void injectTestFrame();
+    void clearLog();
 
 private:
     void setupUi();
     void setupConnections();
     void appendLog(const QString &text);
 
-    QByteArray buildReadHoldingRegistersRequest(quint8 slave, quint16 startAddr, quint16 quantity);
+    QString bytesToHexString(const QByteArray &data);
     quint16 calcModbusCrc(const QByteArray &data);
-    void handleReceivedData();
+    QByteArray buildReadHoldingRegistersRequest(quint8 slave, quint16 startAddr, quint16 quantity);
+
+    void processRxBuffer();
+    bool tryExtractOneFrame(QByteArray &frame);
     void parseModbusResponse(const QByteArray &frame);
     float registersToBigEndianFloat(quint16 regHi, quint16 regLo);
-    QString bytesToHexString(const QByteArray &data);
+
     bool sendReadRequest(quint8 slave, quint16 startAddr, quint16 quantity);
 
 private:
     QSerialPort *m_serialPort;
     QByteArray m_rxBuffer;
-
-    quint8 m_lastSlave = 1;
-    quint16 m_lastStartAddr = 8192;
-    quint16 m_lastQuantity = 2;
-    bool m_waitingResponse = false;
 
     QLineEdit *m_portEdit;
     QSpinBox *m_baudSpin;
@@ -65,12 +65,16 @@ private:
 
     QPushButton *m_readFlowRateButton;
     QPushButton *m_readFlowVelocityButton;
+    QPushButton *m_injectFrameButton;
+    QPushButton *m_clearLogButton;
 
     QPlainTextEdit *m_logEdit;
 
+    QLabel *m_lastFrameLabel;
     QLabel *m_lastRegsLabel;
     QLabel *m_lastFloatLabel;
     QLabel *m_lastExceptionLabel;
+    QLabel *m_lastCrcLabel;
 };
 
 #endif // MAINWINDOW_H
